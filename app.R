@@ -5,6 +5,7 @@
 # reduce the number of packages that the app loads
 # make an option for a reference OC curve
 # make additional tabs to specify OC curves different ways
+# add a refresh button to the top graph
 
 library(shiny)
 library(AcceptanceSampling)

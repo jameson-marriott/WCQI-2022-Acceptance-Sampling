@@ -38,3 +38,4 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 rsconnect/shinyapps.io/jameson-marriott/WCQI-2022.dcf
+WCQI-2022-Acceptance-Sampling.Rproj
