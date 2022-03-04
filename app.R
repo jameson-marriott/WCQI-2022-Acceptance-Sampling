@@ -5,11 +5,13 @@
 # reduce the number of packages that the app loads
 # make an option for a reference OC curve
 # make additional tabs to specify OC curves different ways
+# add link to github to app homepage
 
 library(shiny)
 library(AcceptanceSampling)
 library(AQLSchemes)
 library(tidyverse)
+library(patchwork)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(# Application title
@@ -44,15 +46,17 @@ ui <- fluidPage(# Application title
     # Show a plot of the generated distribution
     mainPanel(
       plotOutput("simulation_plot"),
-      plotOutput("OCcurve"),
-      plotOutput("AOQLplot"),
-      plotOutput("ATI")
+      plotOutput("patchwork"),
+      p("Source code is available on ",
+      a(href = "https://github.com/jameson-marriott/WCQI-2022-Acceptance-Sampling",
+        "GitHub."))
     )
   ))
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
   theme_set(theme_bw())
+  
   output$simulation_plot <- renderPlot({
     input$run_simulation # this makes this plot dependent on the run button
     
@@ -114,7 +118,7 @@ server <- function(input, output) {
       )
   })
   
-  output$OCcurve <- renderPlot({
+  output$patchwork <- renderPlot({
     OC_test_plan <-
       OC2c(
         n = input$n,
@@ -128,15 +132,13 @@ server <- function(input, output) {
     plan_data <- tibble(pa = attr(OC_test_plan, "paccept"),
                         pd = attr(OC_test_plan, "pd"))
     
-    ggplot(plan_data, aes(x = pd, y = pa)) +
+    OC_curve_plot <- ggplot(plan_data, aes(x = pd, y = pa)) +
       geom_line() +
       geom_vline(xintercept = (1 - (input$p / 100))) +
       ylab("Prob. of Acceptance") +
       xlab("Percent Defectives") +
       ggtitle("Operating Characteristic (OC) Curve")
-  })
-  
-  output$AOQLplot <- renderPlot({
+    
     AOQ_data <- tibble(p = seq(.01, .25, .005)) %>%
       mutate(
         Pa = pbinom(input$c, input$n, p, lower.tail = TRUE),
@@ -145,7 +147,7 @@ server <- function(input, output) {
       )
     AOQL <- max(AOQ_data$AOQ)
     
-    ggplot(AOQ_data, aes(x = p, y = AOQ)) +
+    AOQL_plot <- ggplot(AOQ_data, aes(x = p, y = AOQ)) +
       geom_line() +
       geom_hline(yintercept = AOQL) +
       geom_vline(xintercept = (1 - (input$p / 100))) +
@@ -153,24 +155,18 @@ server <- function(input, output) {
       ylab("AOQ") +
       xlab("Incoming Percent Non-Conforming") +
       ggtitle("Average Outgoing Quality Limit")
-  })
-  
-  output$ATI <- renderPlot({
-    #generating this table twice - need to make it available to AOQL and ATI plots
-    AOQ_data <- tibble(p = seq(.01, .25, .005)) %>%
-      mutate(
-        Pa = pbinom(input$c, input$n, p, lower.tail = TRUE),
-        AOQ = (Pa * p * (input$N - input$n)) / input$N,
-        ATI = input$n + (1 - Pa) * (input$N - input$n)
-      )
     
-    AOQ_data %>%
+    ATI_plot <- AOQ_data %>%
       ggplot(aes(x = p, y = ATI)) +
       geom_line() +
       geom_vline(xintercept = (1 - (input$p / 100))) +
       ylab("ATI") +
       xlab("Incoming Percent Non-Conforming") +
       ggtitle("Average Total Inspection")
+    
+    OC_curve_plot +
+      AOQL_plot +
+      ATI_plot
   })
 }
 
