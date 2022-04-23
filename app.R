@@ -10,10 +10,11 @@ library(shiny)
 library(shinydashboard)
 library(AcceptanceSampling)
 library(AQLSchemes)
-library(tidyverse)
+library(tidyverse) # only grab used packages
 #library(patchwork)
+theme_set(theme_bw())
 
-# Define UI for application that draws a histogram
+# Define UI
 ui <- dashboardPage(# Application title
   dashboardHeader(title = "Acceptance Sampling"),
   
@@ -46,7 +47,7 @@ ui <- dashboardPage(# Application title
                            "Lot Size:",
                            500,
                            min = 10,
-                           max = 10000,
+                           max = 5000,
                            value = 500,
                            step = 5),
                numericInput("n",
@@ -60,9 +61,9 @@ ui <- dashboardPage(# Application title
                actionButton("run_simulation", # refresh the simulated sample
                             "Run Simulation")
              ),
-             valueBoxOutput("pass_fail_box"),
-             valueBoxOutput("NC_in_n"),
-             valueBoxOutput("good_in_n")
+             valueBoxOutput("pass_fail_box", 12),
+             valueBoxOutput("NC_in_n", 12),
+             valueBoxOutput("good_in_n", 12)
       ),
       column(8,
              fluidRow(
@@ -93,10 +94,9 @@ ui <- dashboardPage(# Application title
   )
 )
 
-# Define server logic required to draw a histogram
+# Define Server Logic
 server <- function(input, output) {
-  theme_set(theme_bw())
-  
+  prob_NC <- reactive({if (1 - (input$p / 100)  > .5) {(1 - (input$p / 100))} else {(.5)}})
   side_length <- reactive({ceiling(sqrt(input$N))})
   
   simulation_data <- reactive({
@@ -172,7 +172,7 @@ server <- function(input, output) {
       r = input$c + 1,
       type = "hypergeom",
       N = input$N,
-      pd = seq(0, .25, .01)
+      pd = seq(0, prob_NC(), .01)
     )
   })  
   
@@ -182,7 +182,7 @@ server <- function(input, output) {
   })
   
   AOQ_data <- reactive({
-    tibble(p = seq(.01, .25, .005)) %>%
+    tibble(p = seq(.01, prob_NC(), .005)) %>%
       mutate(
         Pa = pbinom(input$c, input$n, p, lower.tail = TRUE),
         AOQ = (Pa * p * (input$N - input$n)) / input$N,
