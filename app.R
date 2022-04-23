@@ -3,8 +3,6 @@
 # make an option for a reference OC curve
 # make additional tabs to specify OC curves different ways?
 # test the load of 75 people accessing it all at the same time
-# make sure that n cannot be larger than N
-# make sure that c cannot be larger than n
 
 library(shiny)
 library(shinydashboard)
@@ -45,19 +43,25 @@ ui <- dashboardPage(# Application title
                ),
                sliderInput("N",
                            "Lot Size:",
-                           500,
                            min = 10,
-                           max = 5000,
+                           max = 1000,
                            value = 500,
-                           step = 5),
-               numericInput("n",
+                           step = 5
+                           ),
+               sliderInput("n",
                             "Sample Size:",
                             25,
-                            step = 1),
-               numericInput("c",
+                            min = 1,
+                            max = 500,
+                            step = 1
+                            ),
+               sliderInput("c",
                             "Acceptable Non-Conformances",
                             5,
-                            step = 1),
+                            min = 0,
+                            max = 100,
+                            step = 1
+                            ),
                actionButton("run_simulation", # refresh the simulated sample
                             "Run Simulation")
              ),
@@ -253,6 +257,20 @@ server <- function(input, output) {
       color = "green"
     )
   )
+
+  observe({
+    max_n = input$N
+    updateSliderInput(inputId = "n",
+                      max = max_n)
+  })
+  
+  observe({
+    max_c = input$n - 1
+    updateSliderInput(inputId = "c",
+                      max = max_c)
+  })
+  
+  
 }
 
 # Run the application
