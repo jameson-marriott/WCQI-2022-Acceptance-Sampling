@@ -8,8 +8,9 @@ library(shiny)
 library(shinydashboard)
 library(AcceptanceSampling)
 library(AQLSchemes)
-library(tidyverse) # only grab used packages
-#library(patchwork)
+#library(tidyverse) # only grab used packages
+library(ggplot2)
+library(dplyr)
 theme_set(theme_bw())
 
 # Define UI
@@ -186,7 +187,7 @@ server <- function(input, output) {
   })
   
   AOQ_data <- reactive({
-    tibble(p = seq(.01, prob_NC(), .005)) %>%
+    tibble(p = seq(.01, prob_NC(), .01)) %>%
       mutate(
         Pa = pbinom(input$c, input$n, p, lower.tail = TRUE),
         AOQ = (Pa * p * (input$N - input$n)) / input$N,
